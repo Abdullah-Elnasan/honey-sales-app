@@ -1,11 +1,6 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  nitro: {
-  preset: 'vercel',
-  externals: {
-    inline: ['unhead']
-  }
-},
+  nitro: { preset: 'vercel' },
   experimental: { appManifest: true },
   css: ['~/assets/css/main.css'],
   app: {
