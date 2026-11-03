@@ -31,7 +31,7 @@ export default defineNuxtConfig({
         },
         {
           property: 'og:image',
-          content: 'https://YOUR-DOMAIN.vercel.app/og-image.jpg'
+          content: 'https://honey-sales-app-silk.vercel.app/og-image.jpg'
         },
         {
           property: 'og:image:width',
