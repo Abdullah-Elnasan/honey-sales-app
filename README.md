@@ -6,6 +6,8 @@ Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduct
 
 Before deploying the period-name feature, run [`drizzle/0000_add_period_name.sql`](./drizzle/0000_add_period_name.sql) once against the PostgreSQL database. Existing periods will receive a name based on their start date.
 
+Before deploying buyer names and payment status for sales, run [`drizzle/0001_add_sale_buyer_and_payment.sql`](./drizzle/0001_add_sale_buyer_and_payment.sql) once against the PostgreSQL database. Existing sales are initialized with an empty buyer name and unpaid status.
+
 ## Setup
 
 Make sure to install dependencies:

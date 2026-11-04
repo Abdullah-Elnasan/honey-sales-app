@@ -34,6 +34,17 @@
         <label class="form-label required">البائع</label>
         <input v-model="form.sellerName" class="input" placeholder="اسم البائع" />
       </div>
+      <div class="form-group mb-3">
+        <label class="form-label required">اسم المشتري</label>
+        <input v-model="form.buyerName" class="input" placeholder="اسم المشتري" />
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label required">حالة الدفع</label>
+        <select v-model="form.paymentReceived" class="select">
+          <option :value="false">لم يتم استلام الدفع</option>
+          <option :value="true">تم استلام الدفع</option>
+        </select>
+      </div>
       <div class="total-box mb-4"><span class="text-muted">الإجمالي</span><span class="total-amount">{{ totalAmount.toFixed(2) }}</span></div>
       <button class="btn btn-primary btn-lg w-full" @click="submit" :disabled="!isValid || loading">{{ loading ? 'جارٍ الحفظ...' : 'تسجيل البيع' }}</button>
     </div>
@@ -42,7 +53,7 @@
 
 <script setup>
 const { notify } = useNotify()
-const form = reactive({ periodId: '', honeyTypeId: '', quantityKg: 0, pricePerKg: 0, sellerName: '' })
+const form = reactive({ periodId: '', honeyTypeId: '', quantityKg: 0, pricePerKg: 0, sellerName: '', buyerName: '', paymentReceived: false })
 const periods = ref([])
 const currentStock = ref([])
 const loading = ref(false)
@@ -50,7 +61,7 @@ const activePeriods = computed(() => periods.value.filter(p => !p.endDate))
 const selectedStock = computed(() => currentStock.value.find(s => s.typeId === form.honeyTypeId))
 const totalAmount = computed(() => (form.quantityKg || 0) * (form.pricePerKg || 0))
 const overStock = computed(() => selectedStock.value && form.quantityKg > selectedStock.value.remaining)
-const isValid = computed(() => form.periodId && form.honeyTypeId && form.quantityKg > 0 && form.pricePerKg > 0 && form.sellerName.trim() && !overStock.value)
+const isValid = computed(() => form.periodId && form.honeyTypeId && form.quantityKg > 0 && form.pricePerKg > 0 && form.sellerName.trim() && form.buyerName.trim() && !overStock.value)
 
 async function onPeriodChange() {
   form.honeyTypeId = ''
@@ -61,9 +72,9 @@ async function submit() {
   try {
     await $fetch('/api/sales', { method: 'POST', body: form })
     notify('تم تسجيل البيع')
-    form.honeyTypeId = ''; form.quantityKg = 0; form.pricePerKg = 0; form.sellerName = '';
+    form.honeyTypeId = ''; form.quantityKg = 0; form.pricePerKg = 0; form.sellerName = ''; form.buyerName = ''; form.paymentReceived = false
     await onPeriodChange()
-  } catch (e) { notify('فشل التسجيل', 'error') } finally { loading.value = false }
+  } catch (e) { notify(e.data?.statusMessage || 'فشل تسجيل البيع', 'error') } finally { loading.value = false }
 }
 const formatDate = d => new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })
 onMounted(async () => { periods.value = await $fetch('/api/periods') })

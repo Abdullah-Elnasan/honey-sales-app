@@ -18,8 +18,11 @@ export default defineEventHandler(async (event) => {
     pricePerKg: sales.pricePerKg,
     totalPrice: sales.totalPrice,
     sellerName: sales.sellerName,
+    buyerName: sales.buyerName,
+    paymentReceived: sales.paymentReceived,
     saleDate: sales.saleDate,
     periodId: sales.periodId,
+    honeyTypeId: sales.honeyTypeId,
   })
   .from(sales)
   .leftJoin(honeyTypes, eq(sales.honeyTypeId, honeyTypes.id))

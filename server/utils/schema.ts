@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, numeric, integer } from 'drizzle-orm/pg-core'
+import { pgTable, serial, text, timestamp, numeric, integer, boolean } from 'drizzle-orm/pg-core'
 
 // جدول الفترات
 export const periods = pgTable('periods', {
@@ -33,5 +33,7 @@ export const sales = pgTable('sales', {
   pricePerKg: numeric('price_per_kg', { precision: 10, scale: 2 }).notNull(),
   totalPrice: numeric('total_price', { precision: 12, scale: 2 }).notNull(),
   sellerName: text('seller_name').notNull(),
+  buyerName: text('buyer_name').notNull().default(''),
+  paymentReceived: boolean('payment_received').notNull().default(false),
   saleDate: timestamp('sale_date', { withTimezone: true }).defaultNow().notNull(),
 })
