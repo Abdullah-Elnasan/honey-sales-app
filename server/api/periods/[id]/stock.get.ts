@@ -8,6 +8,7 @@ export default defineEventHandler(async (event) => {
   const stock = await db.select({
     typeId: periodStock.honeyTypeId,
     typeName: honeyTypes.name,
+    category: honeyTypes.category,
     initialQty: periodStock.quantityKg,
     costPerKg: periodStock.costPerKg,
   })
@@ -30,6 +31,7 @@ export default defineEventHandler(async (event) => {
     return {
       typeId: item.typeId,
       typeName: item.typeName,
+      category: item.category ?? 'honey',
       initialQty: Number(item.initialQty),
       costPerKg: Number(item.costPerKg),
       soldQty,

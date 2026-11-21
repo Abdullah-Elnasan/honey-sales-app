@@ -22,6 +22,10 @@
             <span class="nav-icon">📋</span>
             <span>سجل المبيعات</span>
           </NuxtLink>
+          <NuxtLink to="/invoices" class="nav-tab" active-class="nav-tab--active">
+            <span class="nav-icon">🧾</span>
+            <span>فواتير الموردين</span>
+          </NuxtLink>
           <NuxtLink to="/stats" class="nav-tab" active-class="nav-tab--active">
             <span class="nav-icon">📊</span>
             <span>الإحصائيات</span>

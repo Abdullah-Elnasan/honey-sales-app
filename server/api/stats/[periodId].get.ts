@@ -1,6 +1,7 @@
 import { db } from '../../utils/db'
 import { periodStock, sales, honeyTypes } from '../../utils/schema'
-import { eq, sum, sql } from 'drizzle-orm'
+import { PRODUCT_TYPES } from '../../utils/invoices'
+import { eq, sum } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const periodId = Number(getRouterParam(event, 'periodId'))
@@ -9,6 +10,7 @@ export default defineEventHandler(async (event) => {
   const stock = await db.select({
     typeId: periodStock.honeyTypeId,
     typeName: honeyTypes.name,
+    category: honeyTypes.category,
     initialQty: periodStock.quantityKg,
     costPerKg: periodStock.costPerKg,
   })
@@ -32,18 +34,32 @@ export default defineEventHandler(async (event) => {
     const soldItem = soldMap.get(item.typeId)
     const totalSold = Number(soldItem?.totalSold ?? 0)
     const remaining = Number(item.initialQty) - totalSold
+    const totalRevenue = Number(soldItem?.totalRevenue ?? 0)
+    const costPerKg = Number(item.costPerKg)
+    const totalCost = totalSold * costPerKg
     return {
       typeName: item.typeName,
+      category: item.category ?? 'honey',
       initialQty: Number(item.initialQty),
       totalSold,
       remaining,
-      totalRevenue: Number(soldItem?.totalRevenue ?? 0),
-      costPerKg: Number(item.costPerKg),
+      totalRevenue,
+      costPerKg,
+      totalCost,
+      profit: totalRevenue - totalCost,
     }
   })
 
-  const totalRevenue = details.reduce((s, d) => s + d.totalRevenue, 0)
-  const totalCost = details.reduce((s, d) => s + (d.totalSold * d.costPerKg), 0)
+  const summarize = (rows: typeof details) => {
+    const totalRevenue = rows.reduce((s, d) => s + d.totalRevenue, 0)
+    const totalCost = rows.reduce((s, d) => s + d.totalCost, 0)
+    return { totalRevenue, totalCost, profit: totalRevenue - totalCost }
+  }
 
-  return { details, totalRevenue, totalCost, profit: totalRevenue - totalCost }
+  // ملخص منفصل لكل نوع منتج (عسل / سمن)
+  const byCategory = Object.fromEntries(
+    PRODUCT_TYPES.map(c => [c, summarize(details.filter(d => d.category === c))]),
+  ) as Record<typeof PRODUCT_TYPES[number], ReturnType<typeof summarize>>
+
+  return { details, ...summarize(details), byCategory }
 })
