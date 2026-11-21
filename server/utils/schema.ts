@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm'
 import { pgTable, pgEnum, serial, text, timestamp, numeric, integer, boolean, date, index } from 'drizzle-orm/pg-core'
 
 // نوع المنتج: عسل أو سمن عربي
@@ -43,15 +44,26 @@ export const sales = pgTable('sales', {
   saleDate: timestamp('sale_date', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// فواتير الموردين (بيانات ثابتة)
+// فواتير الموردين (رأس الفاتورة) — total = مجموع line_total للأصناف، يُحسب في الخادم
 export const invoices = pgTable('invoices', {
   id: serial('id').primaryKey(),
-  type: productType('type').notNull(),
-  quantity: numeric('quantity', { precision: 10, scale: 2 }).notNull(),
-  pricePerKg: numeric('price_per_kg', { precision: 10, scale: 2 }).notNull(),
   total: numeric('total', { precision: 12, scale: 2 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, t => [index('invoices_type_idx').on(t.type)])
+})
+
+// أصناف الفاتورة
+export const invoiceItems = pgTable('invoice_items', {
+  id: serial('id').primaryKey(),
+  invoiceId: integer('invoice_id').references(() => invoices.id, { onDelete: 'cascade' }).notNull(),
+  productType: productType('product_type').notNull(),
+  productName: text('product_name').notNull(),
+  quantity: numeric('quantity', { precision: 10, scale: 2 }).notNull(),
+  pricePerKg: numeric('price_per_kg', { precision: 10, scale: 2 }).notNull(),
+  lineTotal: numeric('line_total', { precision: 12, scale: 2 }).notNull(),
+}, t => [
+  index('invoice_items_invoice_id_idx').on(t.invoiceId),
+  index('invoice_items_product_type_idx').on(t.productType),
+])
 
 // دفعات الفاتورة (تفاصيل)
 export const payments = pgTable('payments', {
@@ -61,3 +73,17 @@ export const payments = pgTable('payments', {
   payerName: text('payer_name').notNull(),
   date: date('date', { mode: 'string' }).notNull(),
 }, t => [index('payments_invoice_id_idx').on(t.invoiceId)])
+
+// العلاقات (للاستعلامات المتداخلة db.query)
+export const invoicesRelations = relations(invoices, ({ many }) => ({
+  items: many(invoiceItems),
+  payments: many(payments),
+}))
+
+export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
+  invoice: one(invoices, { fields: [invoiceItems.invoiceId], references: [invoices.id] }),
+}))
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  invoice: one(invoices, { fields: [payments.invoiceId], references: [invoices.id] }),
+}))

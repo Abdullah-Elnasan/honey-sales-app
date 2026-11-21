@@ -10,6 +10,8 @@ Before deploying buyer names and payment status for sales, run [`drizzle/0001_ad
 
 Before deploying supplier invoices/payments and the honey/ghee split, run [`drizzle/0002_add_invoices_payments_and_product_type.sql`](./drizzle/0002_add_invoices_payments_and_product_type.sql) once against the PostgreSQL database. It creates the `product_type` enum, the `invoices` and `payments` tables, and adds a `category` column to `honey_types` (existing types default to `honey`; sales and stock inherit the category through `honey_type_id`).
 
+Before deploying multi-item supplier invoices, run [`drizzle/0003_invoice_line_items.sql`](./drizzle/0003_invoice_line_items.sql) once (after `0002`). It creates `invoice_items`, copies each existing single-product invoice into one line item, and drops `type`, `quantity` and `price_per_kg` from `invoices` (`total` stays as the sum of the line totals).
+
 ## Setup
 
 Make sure to install dependencies:

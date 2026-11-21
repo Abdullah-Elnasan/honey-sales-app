@@ -63,7 +63,8 @@ The migrations are plain SQL files in `drizzle/`. They are safe to re-run (`IF N
 |------|--------------|
 | `0000_add_period_name.sql` | Adds `name` to periods |
 | `0001_add_sale_buyer_and_payment.sql` | Adds buyer name and payment status to sales |
-| `0002_add_invoices_payments_and_product_type.sql` | **New:** `product_type` enum, `invoices` and `payments` tables, `honey_types.category` |
+| `0002_add_invoices_payments_and_product_type.sql` | `product_type` enum, `invoices` and `payments` tables, `honey_types.category` |
+| `0003_invoice_line_items.sql` | **New:** `invoice_items` table; moves old single-product invoices into one item each, then drops `type/quantity/price_per_kg` from `invoices` |
 
 **Option A: Neon SQL Editor (no install needed)**
 Open the Neon console, select your **dev** branch, open *SQL Editor*, paste each file's contents, and run them.
@@ -75,6 +76,7 @@ $env:DATABASE_URL = "postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require"
 psql $env:DATABASE_URL -f drizzle/0000_add_period_name.sql
 psql $env:DATABASE_URL -f drizzle/0001_add_sale_buyer_and_payment.sql
 psql $env:DATABASE_URL -f drizzle/0002_add_invoices_payments_and_product_type.sql
+psql $env:DATABASE_URL -f drizzle/0003_invoice_line_items.sql
 ```
 
 Verify the tables exist:
@@ -83,7 +85,7 @@ Verify the tables exist:
 psql $env:DATABASE_URL -c "\dt"
 ```
 
-You should see `invoices` and `payments` in the list.
+You should see `invoices`, `invoice_items` and `payments` in the list.
 
 ---
 
@@ -101,7 +103,9 @@ Open **http://localhost:3000**. Nuxt reads `.env` automatically in dev mode.
 
 ### Feature 1: Supplier invoices and payments
 - [ ] The nav shows a new **🧾 فواتير الموردين** tab.
-- [ ] **New invoice** (`/invoices/new`): choose Honey or Ghee, enter quantity and price per kg. The total updates as you type.
+- [ ] **New invoice** (`/invoices/new`): each row has Type, Product Name (e.g. حبة البركة), Quantity, Price per Kg and an auto Line Total.
+- [ ] **+ إضافة صنف** adds a row; **حذف** removes one (disabled when only one row is left). The invoice total sums all rows.
+- [ ] Save is disabled until every row is complete.
 - [ ] Saving redirects to the invoice details page.
 - [ ] **Details** (`/invoices/:id`): click **＋ إضافة دفعة**. A modal opens with amount, payer name, and date.
 - [ ] Add a payment. It appears in the payments table, and *Total Paid* and *Remaining* update.
@@ -122,7 +126,7 @@ Open **http://localhost:3000**. Nuxt reads `.env` automatically in dev mode.
 ```powershell
 # Create invoice
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/invoices `
-  -ContentType 'application/json' -Body '{"type":"ghee","quantity":10,"pricePerKg":25}'
+  -ContentType 'application/json' -Body '{"items":[{"productType":"ghee","productName":"سمن بلدي","quantity":10,"pricePerKg":25},{"productType":"honey","productName":"حبة البركة","quantity":5,"pricePerKg":40}]}'
 
 # Add payment to invoice 1
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/invoices/1/payments `
@@ -161,7 +165,7 @@ Then open a Pull Request on GitHub from `worktree-invoices-ghee` into `master`.
 
 ## 10. After merging (production)
 
-1. Run `drizzle/0002_add_invoices_payments_and_product_type.sql` **once** on the production database, before or right as the new code deploys.
+1. Run the migrations that have not been applied yet, **in order** (`0002` then `0003`), on the production database **before** the new code deploys. Otherwise the API returns 500 (as happened with `/api/types` when `0002` was missing).
 2. Existing honey types default to `honey`. To mark an existing type as ghee, either create a new period with that type name and the ghee category (this updates the type's category), or run:
    ```sql
    UPDATE honey_types SET category = 'ghee' WHERE name = 'سمن عربي';
@@ -174,6 +178,7 @@ Then open a Pull Request on GitHub from `worktree-invoices-ghee` into `master`.
 | Problem | Fix |
 |---------|-----|
 | `type "product_type" does not exist` or `relation "invoices" does not exist` | Migration `0002` was not applied to the DB in `.env`. Run step 5. |
+| `relation "invoice_items" does not exist` | Migration `0003` was not applied. Run step 5. |
 | `DATABASE_URL` undefined or connection errors | `.env` is missing, in the wrong folder, or has a typo. It must be in the project root. |
 | Port 3000 is busy | `pnpm dev --port 3001` |
 | Strange build errors after switching branches | Delete `.nuxt` and `node_modules`, then `pnpm install`. |

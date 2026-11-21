@@ -1,7 +1,6 @@
-import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/db'
-import { invoices, payments } from '../../../utils/schema'
-import { invoiceSummaryQuery, parseInvoiceId, round2, toInvoiceSummary } from '../../../utils/invoices'
+import { payments } from '../../../utils/schema'
+import { getInvoiceBalance, parseInvoiceId, round2 } from '../../../utils/invoices'
 
 // POST /api/invoices/:id/payments  body: { amount, payerName, date: 'YYYY-MM-DD' }
 export default defineEventHandler(async (event) => {
@@ -20,12 +19,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'بيانات الدفعة غير صحيحة' })
   }
 
-  const [row] = await invoiceSummaryQuery().where(eq(invoices.id, invoiceId))
-  if (!row) {
+  const balance = await getInvoiceBalance(invoiceId)
+  if (!balance) {
     throw createError({ statusCode: 404, statusMessage: 'الفاتورة غير موجودة' })
   }
 
-  const { remaining } = toInvoiceSummary(row)
+  const { remaining } = balance
   if (amount > remaining + 0.001) {
     throw createError({ statusCode: 400, statusMessage: `المبلغ أكبر من المتبقي (${remaining.toFixed(2)})` })
   }

@@ -30,21 +30,26 @@
     <div v-else-if="invoices.length === 0" class="card empty-state"><div class="empty-icon">🧾</div><p>لا توجد فواتير مطابقة.</p></div>
     <div v-else class="table-container">
       <table class="table">
-        <thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>الكمية (كغ)</th><th>سعر الكيلو</th><th>إجمالي الفاتورة</th><th>المدفوع</th><th>المتبقي</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th>#</th><th>التاريخ</th><th>الأصناف</th><th>الكمية (كغ)</th><th>إجمالي الفاتورة</th><th>المدفوع</th><th>المتبقي</th><th>إجراءات</th></tr></thead>
         <tbody>
           <tr v-for="inv in invoices" :key="inv.id">
             <td class="text-muted">{{ inv.id }}</td>
             <td class="text-sm">{{ formatDate(inv.createdAt) }}</td>
-            <td><span class="badge" :class="typeBadge(inv.type)">{{ typeLabel(inv.type) }}</span></td>
-            <td>{{ inv.quantity.toFixed(1) }}</td>
-            <td>{{ inv.pricePerKg.toFixed(2) }}</td>
+            <td>
+              <div class="items-summary">
+                <span class="font-semibold">{{ inv.itemsCount }} {{ inv.itemsCount === 1 ? 'صنف' : 'أصناف' }}</span>
+                <span v-for="t in inv.productTypes" :key="t" class="badge" :class="typeBadge(t)">{{ typeLabel(t) }}</span>
+              </div>
+              <div class="text-sm text-muted items-names" :title="itemNames(inv)">{{ itemNames(inv) }}</div>
+            </td>
+            <td>{{ inv.totalQuantity.toFixed(1) }}</td>
             <td class="font-semibold">{{ inv.total.toFixed(2) }}</td>
             <td class="text-success">{{ inv.totalPaid.toFixed(2) }}</td>
             <td><span class="badge" :class="inv.remaining > 0 ? 'badge-danger' : 'badge-success'">{{ inv.remaining > 0 ? inv.remaining.toFixed(2) : 'مسددة' }}</span></td>
             <td><NuxtLink :to="`/invoices/${inv.id}`" class="btn btn-secondary">التفاصيل</NuxtLink></td>
           </tr>
         </tbody>
-        <tfoot><tr><td colspan="3">الإجمالي ({{ invoices.length }})</td><td>{{ sumQty.toFixed(1) }} كغ</td><td>—</td><td>{{ sumTotal.toFixed(2) }}</td><td class="text-success">{{ sumPaid.toFixed(2) }}</td><td>{{ sumRemaining.toFixed(2) }}</td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="3">الإجمالي ({{ invoices.length }})</td><td>{{ sumQty.toFixed(1) }} كغ</td><td>{{ sumTotal.toFixed(2) }}</td><td class="text-success">{{ sumPaid.toFixed(2) }}</td><td>{{ sumRemaining.toFixed(2) }}</td><td></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -60,7 +65,8 @@ const loading = ref(true)
 const typeFilter = ref(typeof route.query.type === 'string' ? route.query.type : '')
 
 const sum = key => invoices.value.reduce((s, x) => s + x[key], 0)
-const sumQty = computed(() => sum('quantity'))
+const sumQty = computed(() => sum('totalQuantity'))
+const itemNames = inv => inv.items.map(i => i.productName).join('، ')
 const sumTotal = computed(() => sum('total'))
 const sumPaid = computed(() => sum('totalPaid'))
 const sumRemaining = computed(() => sum('remaining'))
@@ -91,4 +97,6 @@ onMounted(fetchInvoices)
 .stat-label { font-size: .8rem; color: var(--text-muted); font-weight: 500; }
 .stat-value { font-size: 1.5rem; font-weight: 700; font-family: 'Cairo', sans-serif; }
 a.btn { text-decoration: none; }
+.items-summary { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.items-names { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: .2rem; }
 </style>

@@ -15,17 +15,37 @@
       <div class="card mb-4 animate-fade">
         <div class="card-header">
           <h2>بيانات الفاتورة</h2>
-          <span class="badge" :class="typeBadge(invoice.type)">{{ typeLabel(invoice.type) }}</span>
+          <div class="flex gap-2">
+            <span v-for="t in invoice.productTypes" :key="t" class="badge" :class="typeBadge(t)">{{ typeLabel(t) }}</span>
+          </div>
         </div>
         <div class="info-grid">
-          <div><span class="stat-label">الكمية</span><span class="info-value">{{ invoice.quantity.toFixed(1) }} كغ</span></div>
-          <div><span class="stat-label">سعر الكيلو</span><span class="info-value">{{ invoice.pricePerKg.toFixed(2) }}</span></div>
+          <div><span class="stat-label">عدد الأصناف</span><span class="info-value">{{ invoice.itemsCount }}</span></div>
+          <div><span class="stat-label">إجمالي الكمية</span><span class="info-value">{{ invoice.totalQuantity.toFixed(1) }} كغ</span></div>
           <div><span class="stat-label">إجمالي الفاتورة</span><span class="info-value">{{ invoice.total.toFixed(2) }}</span></div>
           <div><span class="stat-label">إجمالي المدفوع</span><span class="info-value text-success">{{ invoice.totalPaid.toFixed(2) }}</span></div>
           <div><span class="stat-label">المتبقي</span><span class="info-value" :class="invoice.remaining > 0 ? 'text-danger' : 'text-success'">{{ invoice.remaining.toFixed(2) }}</span></div>
         </div>
         <div class="progress mt-3"><div class="progress-fill" :style="{ width: paidPct + '%' }"></div></div>
         <span class="text-sm text-muted">{{ paidPct.toFixed(0) }}% مدفوع</span>
+      </div>
+
+      <h2 class="mb-3">أصناف الفاتورة</h2>
+      <div class="table-container mb-4">
+        <table class="table">
+          <thead><tr><th>#</th><th>النوع</th><th>اسم الصنف</th><th>الكمية (كغ)</th><th>سعر الكيلو</th><th>الإجمالي</th></tr></thead>
+          <tbody>
+            <tr v-for="(item, i) in invoice.items" :key="item.id">
+              <td class="text-muted">{{ i + 1 }}</td>
+              <td><span class="badge" :class="typeBadge(item.productType)">{{ typeLabel(item.productType) }}</span></td>
+              <td class="font-semibold">{{ item.productName }}</td>
+              <td>{{ item.quantity.toFixed(1) }}</td>
+              <td>{{ item.pricePerKg.toFixed(2) }}</td>
+              <td class="font-semibold">{{ item.lineTotal.toFixed(2) }}</td>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">الإجمالي ({{ invoice.itemsCount }})</td><td>{{ invoice.totalQuantity.toFixed(1) }} كغ</td><td>—</td><td class="text-success">{{ invoice.total.toFixed(2) }}</td></tr></tfoot>
+        </table>
       </div>
 
       <h2 class="mb-3">الدفعات</h2>
