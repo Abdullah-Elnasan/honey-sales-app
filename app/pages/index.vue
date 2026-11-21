@@ -25,6 +25,12 @@
       <div class="stock-list mb-3">
         <div v-for="(item, i) in form.stock" :key="i" class="stock-row">
           <label class="stock-field">
+            <span class="form-label">التصنيف</span>
+            <select v-model="item.category" class="select">
+              <option v-for="o in productOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+          <label class="stock-field">
             <span class="form-label">نوع العسل</span>
             <input v-model="item.typeName" class="input" placeholder="مثال: سدر" />
           </label>
@@ -76,14 +82,16 @@
 
 <script setup>
 const { notify } = useNotify()
+const { options: productOptions } = useProductTypes()
 const periods = ref([])
 const showForm = ref(false)
 const loading = ref(false)
-const form = reactive({ name: '', startDate: new Date().toISOString().slice(0, 10), stock: [{ typeName: '', quantityKg: 0, costPerKg: 0 }] })
+const newStockRow = () => ({ category: 'honey', typeName: '', quantityKg: 0, costPerKg: 0 })
+const form = reactive({ name: '', startDate: new Date().toISOString().slice(0, 10), stock: [newStockRow()] })
 
-const addStockRow = () => form.stock.push({ typeName: '', quantityKg: 0, costPerKg: 0 })
+const addStockRow = () => form.stock.push(newStockRow())
 const toggleForm = () => { showForm.value = !showForm.value; if (!showForm.value) resetForm() }
-const resetForm = () => { form.name = ''; form.startDate = new Date().toISOString().slice(0, 10); form.stock = [{ typeName: '', quantityKg: 0, costPerKg: 0 }] }
+const resetForm = () => { form.name = ''; form.startDate = new Date().toISOString().slice(0, 10); form.stock = [newStockRow()] }
 
 async function fetchPeriods() { periods.value = await $fetch('/api/periods') }
 
@@ -124,7 +132,7 @@ onMounted(fetchPeriods)
 
 <style scoped>
 .stock-list { display: flex; flex-direction: column; gap: .5rem; }
-.stock-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: .5rem; align-items: end; }
+.stock-row { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr auto; gap: .5rem; align-items: end; }
 .stock-field { display: flex; flex-direction: column; gap: .35rem; }
 .periods-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 .period-meta { display: flex; flex-direction: column; gap: .25rem; }

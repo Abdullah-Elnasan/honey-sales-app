@@ -1,6 +1,6 @@
 import { db } from '../../utils/db'
 import { periods, periodStock, honeyTypes } from '../../utils/schema'
-import { eq } from 'drizzle-orm'
+import { isProductType } from '../../utils/invoices'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -20,24 +20,17 @@ export default defineEventHandler(async (event) => {
   }
 
   for (const item of body.stock) {
-    // إدراج النوع إذا لم يكن موجوداً
+    // إدراج النوع إذا لم يكن موجوداً، وتحديث تصنيفه (عسل/سمن) إذا وُجد
+    const category = isProductType(item.category) ? item.category : 'honey'
     const [type] = await db.insert(honeyTypes)
-      .values({ name: item.typeName })
-      .onConflictDoNothing()
+      .values({ name: item.typeName, category })
+      .onConflictDoUpdate({ target: honeyTypes.name, set: { category } })
       .returning()
-    
-    let typeId: number
-    if (type) {
-      typeId = type.id
-    } else {
-      // النوع موجود مسبقاً، لذا نجلبه
-      const existing = await db.select().from(honeyTypes).where(eq(honeyTypes.name, item.typeName))
-      const existingType = existing[0]
-      if (!existingType) {
-        throw createError({ statusCode: 500, message: `فشل العثور على النوع: ${item.typeName}` })
-      }
-      typeId = existingType.id
+
+    if (!type) {
+      throw createError({ statusCode: 500, message: `فشل العثور على النوع: ${item.typeName}` })
     }
+    const typeId = type.id
 
     await db.insert(periodStock).values({
       periodId: period.id,

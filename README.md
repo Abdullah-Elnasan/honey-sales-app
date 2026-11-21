@@ -8,6 +8,8 @@ Before deploying the period-name feature, run [`drizzle/0000_add_period_name.sql
 
 Before deploying buyer names and payment status for sales, run [`drizzle/0001_add_sale_buyer_and_payment.sql`](./drizzle/0001_add_sale_buyer_and_payment.sql) once against the PostgreSQL database. Existing sales are initialized with an empty buyer name and unpaid status.
 
+Before deploying supplier invoices/payments and the honey/ghee split, run [`drizzle/0002_add_invoices_payments_and_product_type.sql`](./drizzle/0002_add_invoices_payments_and_product_type.sql) once against the PostgreSQL database. It creates the `product_type` enum, the `invoices` and `payments` tables, and adds a `category` column to `honey_types` (existing types default to `honey`; sales and stock inherit the category through `honey_type_id`).
+
 ## Setup
 
 Make sure to install dependencies:
